@@ -1,1 +1,2 @@
-/boardcamp-front
+/node_modules
+.env
