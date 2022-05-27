@@ -3,9 +3,9 @@ import connection from "../db.js";
 export async function getCategories(req, res){
 
     try {
-        const result = await connection.query('SELECT * FROM categories');
+        const categories = await connection.query('SELECT * FROM categories');
     
-        res.send(result.rows);
+        res.send(categories.rows);
         
     } catch (error) {
         res.status(500).send(error);
