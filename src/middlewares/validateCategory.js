@@ -17,7 +17,7 @@ export async function validateName(req, res, next){
     try {
         
        const existingName = await connection.query(`SELECT * FROM categories WHERE name=$1`, [name]);
-       if(existingName){
+       if(!existingName){
            return res.status(409).send('Categoria já cadastrada!');
        }
 
