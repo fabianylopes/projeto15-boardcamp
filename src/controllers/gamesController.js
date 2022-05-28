@@ -1,12 +1,26 @@
 import connection from "../db.js";
 
 export async function getGames(req, res){
+    const { name } = req.query;
 
-    try {
-        
-       const games =  await connection.query('SELECT * FROM games');
+    try {       
+        const params = [];
+        let str = '';
 
-        res.send(games.rows);
+        if(name){
+            params.push(`${name}%`);
+            str += `WHERE games.name ILIKE $${params.length}`
+        }
+
+        const games =  await connection.query(`
+        SELECT 
+            games.*, categories.name AS "categoryName"
+        FROM games
+            JOIN categories ON categories.id=games."categoryId"
+            ${str}
+        `, params);
+
+            res.send(games.rows);
 
     } catch (error) {
         res.status(500).send(error);
