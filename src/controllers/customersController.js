@@ -28,10 +28,13 @@ export async function getCustomer(req, res){
     const { id } = req.params;
 
     try {
+        const customer = await connection.query(`SELECT * FROM customers WHERE id=$1`, [id]);
 
-        const customer = await connection.query(`SELECT * FROM customers WHERE id=${id}`);
+        if(customer.rowCount === 0){
+            return res.sendStatus(404);
+        }
 
-        res.send()
+        res.send(customer.rows);
         
     } catch (error) {
         res.status(500).send(error);
