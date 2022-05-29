@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 import connection from "../db.js";
 
 export async function getRentals(req, res) {
@@ -70,4 +72,54 @@ function rentalsData(obj) {
           categoryName
         }
       }
+  }
+
+  export async function setRental(req, res){
+    const { customerId, gameId, daysRented } = req.body;
+
+      const rentDate = dayjs().format('YYYY-MM-DD');
+      const returnDate = null;
+      const delayFee = null;
+
+    try {
+
+      const existingCustomer = await connection.query(`
+      SELECT id FROM customers WHERE id=$1
+      `, [customerId]);
+      
+      if(!existingCustomer){
+        return res.sendStatus(400);
+      }
+      
+      const existingGame = await connection.query(`
+        SELECT id FROM games WHERE id=$1
+      `, [gameId]);
+      
+      if(!existingGame){
+        return res.sendStatus(400);
+      }
+
+      const {rows: pricePerDay} = await connection.query(`
+        SELECT * FROM games WHERE id=$1
+      `, [gameId]);
+
+
+      const rentalPrice = pricePerDay[0].pricePerDay;
+
+      const originalPrice = rentalPrice * daysRented;
+
+      
+      await connection.query(`
+        INSERT INTO rentals 
+          ("customerId", "gameId", "rentDate", 
+          "daysRented", "returnDate", "originalPrice", "delayFee")
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `, [customerId, gameId, rentDate, daysRented, returnDate, originalPrice, delayFee]);
+        
+      
+      res.sendStatus(201);
+      
+    } catch (error) {
+      res.status(500).send(error);
+    }
   }
