@@ -108,7 +108,6 @@ function rentalsData(obj) {
 
       const originalPrice = rentalPrice * daysRented;
 
-      
       await connection.query(`
         INSERT INTO rentals 
           ("customerId", "gameId", "rentDate", 
@@ -127,10 +126,49 @@ function rentalsData(obj) {
   export async function returnRental(req, res){
     const { id } = req.params;
 
+    const returnDate = dayjs().format('YYYY-MM-DD');
+    const delayFee = null;
+    
     try {
+
+      const {rows: rentDate} = await connection.query(`
+        SELECT * FROM rentals WHERE id=$1
+      `, [id]);
+
+      const initialDate = rentDate[0].rentDate;
+
+      const {rows: daysRented} = await connection.query(`
+        SELECT * FROM rentals WHERE id=$1
+      `, [id]);
+
+      const days = daysRented[0].daysRented;
       
-      res.Sendstatus(200);
+      const {rows: originalPrice} = await connection.query(`
+        SELECT * FROM rentals WHERE id=$1
+      `, [id]);
+
+      const price = originalPrice[0].originalPrice;
+
+      const difference = dayjs(returnDate).diff(dayjs(initialDate), 'day');
+      
+
+      if(days < difference){
+        const delayDays = difference - days; 
+        
+        delayFee = delayDays * (price / daysRented);
+
+      }
+
+      await connection.query(`
+        UPDATE rentals 
+        SET "returnDate"=$1, "delayFee"=$2 
+        WHERE id=$3
+      `, [returnDate, delayFee, id])
+
+      res.sendStatus(200);
+
     } catch (error) {
+      console.log(error);
       res.status(500).send(error);
     }
 
@@ -140,25 +178,6 @@ function rentalsData(obj) {
     const { id } = req.params;
 
     try {
-
-        const existingId = await connection.query(`
-          SELECT * FROM rentals WHERE id=$1
-        `, [id]);
-
-        if(existingId.rowCount === 0){
-          return res.status(404).send("Id não encontrado!");
-        }
-
-        const { rows: rentalReturned } = await connection.query(`
-          SELECT "returnDate" FROM rentals WHERE id=$1
-        `, [id]);
-
-        console.log(rentalReturned[0].returnDate)
-
-        if(rentalReturned[0].returnDate !== null){
-          return res.status(400).send('Jogo já devolvido!');
-        }
-       
         await connection.query(`
           DELETE FROM rentals WHERE id=$1
         `, [id]);
@@ -166,7 +185,6 @@ function rentalsData(obj) {
       res.sendStatus(200);
       
     } catch (error) {
-      console.log(error);
       res.status(500).send(error);
     }
 
