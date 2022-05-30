@@ -124,6 +124,18 @@ function rentalsData(obj) {
     }
   }
 
+  export async function returnRental(req, res){
+    const { id } = req.params;
+
+    try {
+      
+      res.Sendstatus(200);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+
+  }
+
   export async function deleteRental(req, res){
     const { id } = req.params;
 
@@ -134,24 +146,24 @@ function rentalsData(obj) {
         `, [id]);
 
         if(existingId.rowCount === 0){
-          return res.status(404);
+          return res.status(404).send("Id não encontrado!");
         }
 
-        const rentalReturned = await connection.query(`
-          SELECT returnDate FROM rentals WHERE id=$1
+        const { rows: rentalReturned } = await connection.query(`
+          SELECT "returnDate" FROM rentals WHERE id=$1
         `, [id]);
 
-        console.log(rentalReturned.returnDate)
+        console.log(rentalReturned[0].returnDate)
 
-        if(rentalReturned.returnDate !== null){
-          return res.status(400);
+        if(rentalReturned[0].returnDate !== null){
+          return res.status(400).send('Jogo já devolvido!');
         }
        
         await connection.query(`
           DELETE FROM rentals WHERE id=$1
         `, [id]);
 
-      res.status(200);
+      res.sendStatus(200);
       
     } catch (error) {
       console.log(error);
