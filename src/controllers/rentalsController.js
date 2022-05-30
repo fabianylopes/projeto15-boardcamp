@@ -123,3 +123,39 @@ function rentalsData(obj) {
       res.status(500).send(error);
     }
   }
+
+  export async function deleteRental(req, res){
+    const { id } = req.params;
+
+    try {
+
+        const existingId = await connection.query(`
+          SELECT * FROM rentals WHERE id=$1
+        `, [id]);
+
+        if(existingId.rowCount === 0){
+          return res.status(404);
+        }
+
+        const rentalReturned = await connection.query(`
+          SELECT returnDate FROM rentals WHERE id=$1
+        `, [id]);
+
+        console.log(rentalReturned.returnDate)
+
+        if(rentalReturned.returnDate !== null){
+          return res.status(400);
+        }
+       
+        await connection.query(`
+          DELETE FROM rentals WHERE id=$1
+        `, [id]);
+
+      res.status(200);
+      
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error);
+    }
+
+  }
